@@ -35,7 +35,7 @@ const registerUser = asynsHandler( async (req,res)=>{
     }
 
     //check if user already exist ;   username , email
-    const existextedUser = User.findOne({
+    const existextedUser = await User.findOne({
         $or:[{ username } , { email }]
     })
     if(existextedUser){
@@ -43,13 +43,17 @@ const registerUser = asynsHandler( async (req,res)=>{
     }
 
     const avatarLocalpath = req.files?.avatar[0]?.path
-    const coverimageLocalpath = req.files?.coverImage[0]?.path
+    // const coverimageLocalpath = req.files?.coverImage[0]?.path
+    let coverimageLocalpath;
+    if (req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverimageLocalpath = req.files.coverImage[0].path
+    }
 
     if(!avatarLocalpath){
         throw new ApiError(400,"Avtar is important")
     }
 
-    const avtar = await uploadOnCloudinary(avatarLocalpath)
+    const avatar = await uploadOnCloudinary(avatarLocalpath)
     const coverImage = await uploadOnCloudinary(coverimageLocalpath)
 
     if(!avatar){
@@ -59,7 +63,7 @@ const registerUser = asynsHandler( async (req,res)=>{
     const user = await User.create({
         fullName,
         avatar:avatar.url,
-        coverImage:coverImage?.url  || "",
+        coverImage:coverImage?.url || "",
         email,
         password,
         username:username.toLowerCase(),
